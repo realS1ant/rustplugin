@@ -33,9 +33,9 @@ interface Values {
 }
 
 const schema = object().shape({
-    action: string().required().oneOf([ 'command', 'power', 'backup' ]),
+    action: string().required().oneOf(['command', 'power', 'backup', 'rust_wipe']),
     payload: string().when('action', {
-        is: v => v !== 'backup',
+        is: v => v !== 'backup' && v !== 'rust_wipe',
         then: string().required('A task payload must be provided.'),
         otherwise: string(),
     }),
@@ -47,8 +47,8 @@ const schema = object().shape({
 });
 
 const ActionListener = () => {
-    const [ { value }, { initialValue: initialAction } ] = useField<string>('action');
-    const [ , { initialValue: initialPayload }, { setValue, setTouched } ] = useField<string>('payload');
+    const [{ value }, { initialValue: initialAction }] = useField<string>('action');
+    const [, { initialValue: initialPayload }, { setValue, setTouched }] = useField<string>('payload');
 
     useEffect(() => {
         if (value !== initialAction) {
@@ -58,7 +58,7 @@ const ActionListener = () => {
             setValue(initialPayload || '');
             setTouched(false);
         }
-    }, [ value ]);
+    }, [value]);
 
     return null;
 };
@@ -83,11 +83,11 @@ const TaskDetailsModal = ({ schedule, task }: Props) => {
             setSubmitting(false);
             addError({ message: 'A backup task cannot be created when the server\'s backup limit is set to 0.', key: 'schedule:task' });
         } else {
-            createOrUpdateScheduleTask(uuid, schedule.id, task?.id, values)
+            createOrUpdateScheduleTask(uuid, schedule.id, task?.id, values.action !== 'rust_wipe', values)
                 .then(task => {
                     let tasks = schedule.tasks.map(t => t.id === task.id ? task : t);
                     if (!schedule.tasks.find(t => t.id === task.id)) {
-                        tasks = [ ...tasks, task ];
+                        tasks = [...tasks, task];
                     }
 
                     appendSchedule({ ...schedule, tasks });
@@ -114,17 +114,18 @@ const TaskDetailsModal = ({ schedule, task }: Props) => {
         >
             {({ isSubmitting, values }) => (
                 <Form css={tw`m-0`}>
-                    <FlashMessageRender byKey={'schedule:task'} css={tw`mb-4`}/>
+                    <FlashMessageRender byKey={'schedule:task'} css={tw`mb-4`} />
                     <h2 css={tw`text-2xl mb-6`}>{task ? 'Edit Task' : 'Create Task'}</h2>
                     <div css={tw`flex`}>
                         <div css={tw`mr-2 w-1/3`}>
                             <Label>Action</Label>
-                            <ActionListener/>
+                            <ActionListener />
                             <FormikFieldWrapper name={'action'}>
                                 <FormikField as={Select} name={'action'}>
                                     <option value={'command'}>Send command</option>
                                     <option value={'power'}>Send power action</option>
                                     <option value={'backup'}>Create backup</option>
+                                    <option value={'rust_wipe'}>Rust Wipe</option>
                                 </FormikField>
                             </FormikFieldWrapper>
                         </div>
@@ -141,7 +142,7 @@ const TaskDetailsModal = ({ schedule, task }: Props) => {
                             <div>
                                 <Label>Payload</Label>
                                 <FormikFieldWrapper name={'payload'}>
-                                    <FormikField as={Textarea} name={'payload'} rows={6}/>
+                                    <FormikField as={Textarea} name={'payload'} rows={6} />
                                 </FormikFieldWrapper>
                             </div>
                             :
@@ -164,7 +165,7 @@ const TaskDetailsModal = ({ schedule, task }: Props) => {
                                         name={'payload'}
                                         description={'Optional. Include the files and folders to be excluded in this backup. By default, the contents of your .pteroignore file will be used. If you have reached your backup limit, the oldest backup will be rotated.'}
                                     >
-                                        <FormikField as={Textarea} name={'payload'} rows={6}/>
+                                        <FormikField as={Textarea} name={'payload'} rows={6} />
                                     </FormikFieldWrapper>
                                 </div>
                         }

@@ -98,8 +98,9 @@ class Task extends Model
     public static $validationRules = [
         'schedule_id' => 'required|numeric|exists:schedules,id',
         'sequence_id' => 'required|numeric|min:1',
-        'action' => 'required|string',
-        'payload' => 'required_unless:action,backup|string',
+        // 'action' => 'required|string',
+        // 'payload' => 'required_unless:action,backup|string',
+        'payload' => 'string',
         'time_offset' => 'required|numeric|between:0,900',
         'is_queued' => 'boolean',
         'continue_on_failure' => 'boolean',

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
 use Pterodactyl\Contracts\Repository\RepositoryInterface;
 use Pterodactyl\Exceptions\Model\DataValidationException;
 use Pterodactyl\Exceptions\Repository\RecordNotFoundException;
@@ -91,9 +92,9 @@ abstract class EloquentRepository extends Repository implements RepositoryInterf
      */
     public function create(array $fields, bool $validate = true, bool $force = false)
     {
+        Log::debug($fields);
         $instance = $this->getBuilder()->newModelInstance();
         ($force) ? $instance->forceFill($fields) : $instance->fill($fields);
-
         if (!$validate) {
             $saved = $instance->skipValidation()->save();
         } else {

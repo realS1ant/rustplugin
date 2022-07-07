@@ -19,6 +19,7 @@ import Switch from '@/components/elements/Switch';
 import Field from '@/components/elements/Field';
 import useFlash from '@/plugins/useFlash';
 import loadDirectory from '@/api/server/files/loadDirectory';
+import addWipeTask from '@/api/server/addWipeTask';
 
 interface Values {
     HOSTNAME: string;
@@ -60,8 +61,9 @@ export default () => {
         }
     }, []);
 
-    const scheduleHandler = (values: FormikValues) => {
+    const scheduleHandler = async (values: FormikValues) => {
         console.log(`Schedule ID: ${values.schedule}`);
+        console.log(await addWipeTask(uuid, values.schedule));
     };
 
     /**

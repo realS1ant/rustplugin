@@ -83,6 +83,13 @@ class RunTaskJob extends Job implements ShouldQueue
                 case Task::ACTION_BACKUP:
                     $backupService->setIgnoredFiles(explode(PHP_EOL, $this->task->payload))->handle($server, null, true);
                     break;
+                case 'rust_wipe':
+                    // I believe we can just use any repository since the http clients should all be the same...
+                    $uuid = $server->uuid;
+                    $powerRepository->setServer($server)->getHttpClient()->post("/api/servers/$uuid/rust_wipe/wipe", [
+                        'json' => ['force' => false],
+                    ]);
+                    break;
                 default:
                     throw new InvalidArgumentException('Invalid task action provided: ' . $this->task->action);
             }

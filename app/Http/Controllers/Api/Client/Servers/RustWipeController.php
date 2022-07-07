@@ -4,11 +4,13 @@ namespace Pterodactyl\Http\Controllers\Api\Client\Servers;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Pterodactyl\Http\Controllers\Api\Client\ClientApiController;
 use Pterodactyl\Http\Requests\Api\Client\ClientApiRequest;
 use Pterodactyl\Http\Requests\Api\Client\Servers\Wipe\GetWipeRequest;
 use Pterodactyl\Jobs\Schedule\RunTaskJob;
 use Pterodactyl\Models\RustWipeVariable;
+use Pterodactyl\Models\Schedule;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Task;
 use Pterodactyl\Transformers\Api\Client\RustWipeVariableTransformer;
@@ -39,22 +41,9 @@ class RustWipeController extends ClientApiController
 
     }
 
-    public function post(ClientApiRequest $req, Server $server): JsonResponse
+    public function post(ClientApiRequest $req, Server $server)
     {
         $vars = $req->input('variables');
-
-        // $relation = $server->hasMany(RustWipeVariable::class, 'server_id', 'id');
-        // return new JsonResponse([]);
-        // $existingOptions = $relation->get(['option'])->all();
-
-        // $existingOptions = array_map(function ($o) {
-        //     return $o['option'];
-        // }, $existingOptions);
-
-        // return new JsonResponse($existingOptions);
-
-        // $return = [];
-
 
         foreach ($vars as $var) {
             RustWipeVariable::query()
@@ -67,39 +56,30 @@ class RustWipeController extends ClientApiController
                         'is_force_option' => $var['isForceOption'],
                     ]
                 );
-
-            // RustWipeVariable::create();
-
-            // return new JsonResponse($var['name']);
-            // print($var);
-            // $return[] = $var['name'];
-
-            // if(in_array($var['name'], $existingOptions)) {
-            //     $relation->where
-            // }
-
-
-            // $relation->get()->where('option', '=', $var['name'])->update
-
-            // $relation->updateOrCreate(
-            //     ['option' => $var['name']],
-            //     [
-            //         'option' => $var['name'],
-            //         'value' => $var['value'],
-            //         'is_egg_variable' => $var['isEggVariable'],
-            //         'is_force_option' => $var['isForceOption'],
-            //     ]
-            // );
         }
+        return;
+    }
 
-        // $relation->updateOrCreate(['option' => 'hostname'], [
-        //     // 'option' => 'hostname',
-        //     'value' => 'welcome',
-        //     'is_egg_variable' => 1,
-        //     'is_force_option' => 0,
-        // ]);
+    public function addTask(ClientApiRequest $req, Server $server, Schedule $schedule)
+    {
 
-        return new JsonResponse([]);
+        $lastTask = $schedule->tasks()->orderByDesc('sequence_id')->first();
+        $task = Task::query()->create([
+            'schedule_id' => $schedule->id,
+            'sequence_id' => ($schedule->tasks()->orderByDesc('sequence_id')->first()->sequence_id ?? 0) + 1,
+            'action' => 'rust_wipe',
+            'payload' => '',
+            'time_offset' => 0,
+            'continue_on_failure' => 1,
+        ]);
+
+        return new JsonResponse($task);
+    }
+
+    public function wipe(ClientApiRequest $req, Server $server): JsonResponse
+    {
+
+        return new JsonResponse(['message' => 'this is ' . ($req->input('force', false) ? '' : 'not ') . 'a forced option.']);
     }
 
     // public function scheduleWipe(ClientApiRequest $req, Server $server) {

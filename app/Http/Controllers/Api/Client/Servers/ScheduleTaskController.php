@@ -7,6 +7,7 @@ use Illuminate\Http\Response;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\Schedule;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Pterodactyl\Facades\Activity;
 use Pterodactyl\Models\Permission;
 use Pterodactyl\Repositories\Eloquent\TaskRepository;
@@ -46,6 +47,7 @@ class ScheduleTaskController extends ClientApiController
      */
     public function store(StoreTaskRequest $request, Server $server, Schedule $schedule)
     {
+        Log::debug('we create new here please call why tf wouldntn you?');
         $limit = config('pterodactyl.client_features.schedules.per_schedule_task_limit', 10);
         if ($schedule->tasks()->count() >= $limit) {
             throw new ServiceLimitExceededException("Schedules may not have more than {$limit} tasks associated with them. Creating this task would put this schedule over the limit.");
@@ -57,7 +59,7 @@ class ScheduleTaskController extends ClientApiController
 
         /** @var \Pterodactyl\Models\Task|null $lastTask */
         $lastTask = $schedule->tasks()->orderByDesc('sequence_id')->first();
-
+        Log::debug('were here??' . $lastTask);
         /** @var \Pterodactyl\Models\Task $task */
         $task = $this->repository->create([
             'schedule_id' => $schedule->id,
@@ -66,6 +68,7 @@ class ScheduleTaskController extends ClientApiController
             'payload' => $request->input('payload') ?? '',
             'time_offset' => $request->input('time_offset'),
             'continue_on_failure' => (bool) $request->input('continue_on_failure'),
+            // ], $request->input('validate', true) ?? true);
         ]);
 
         Activity::event('server:task.create')

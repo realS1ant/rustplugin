@@ -67,8 +67,10 @@ Route::group([
     Route::post('/command', [Client\Servers\CommandController::class, 'index']);
     Route::post('/power', [Client\Servers\PowerController::class, 'index']);
 
-    Route::get('/rust_wipe', [Client\Servers\RustWipeController::class, 'index'])->name('api:client:server.rust_wipe');
-    Route::post('/rust_wipe', [Client\Servers\RustWipeController::class, 'post'])->name('api:client:server.set_wipe_variables');
+    Route::get('/rust_wipe', [Client\Servers\RustWipeController::class, 'index'])->name('api:client:server:rust_wipe.get_wipe_variables');
+    Route::post('/rust_wipe', [Client\Servers\RustWipeController::class, 'post'])->name('api:client:server:rust_wipe.set_wipe_variables');
+    Route::post('/rust_wipe/wipe', [Client\Servers\RustWipeController::class, 'wipe'])->name('api:client:server:rust_wipe.wipe');
+    Route::post('/rust_wipe/addTask/{schedule}', [Client\Servers\RustWipeController::class, 'addTask']);
 
     Route::group(['prefix' => '/databases'], function () {
         Route::get('/', [Client\Servers\DatabaseController::class, 'index']);
