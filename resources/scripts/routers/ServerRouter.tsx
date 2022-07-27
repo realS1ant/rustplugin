@@ -107,7 +107,7 @@ export default () => {
                         <SubNavigation>
                             <div>
                                 <NavLink to={`${match.url}`} exact>Console</NavLink>
-                                <Can action={'rustwipe.*'}>
+                                <Can action={'file.delete'}>
                                     <NavLink to={`${match.url}/wipe`}>Rust Wipe</NavLink>
                                 </Can>
                                 <Can action={'file.*'}>

@@ -85,7 +85,6 @@ class ResourceBelongsToServer
                     throw new InvalidArgumentException('There is no handler configured for a resource of this type: ' . get_class($model));
             }
         }
-        Log::debug('okay??');
         return $next($request);
     }
 }

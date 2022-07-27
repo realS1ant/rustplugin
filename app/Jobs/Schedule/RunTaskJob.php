@@ -11,10 +11,14 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Support\Facades\Log;
 use Pterodactyl\Services\Backups\InitiateBackupService;
 use Pterodactyl\Repositories\Wings\DaemonPowerRepository;
 use Pterodactyl\Repositories\Wings\DaemonCommandRepository;
 use Pterodactyl\Exceptions\Http\Connection\DaemonConnectionException;
+use Pterodactyl\Models\Server;
+use Pterodactyl\Repositories\Wings\DaemonServerRepository;
+use Pterodactyl\Services\RustWipe\RustWipeService;
 
 class RunTaskJob extends Job implements ShouldQueue
 {
@@ -50,7 +54,8 @@ class RunTaskJob extends Job implements ShouldQueue
     public function handle(
         DaemonCommandRepository $commandRepository,
         InitiateBackupService $backupService,
-        DaemonPowerRepository $powerRepository
+        DaemonPowerRepository $powerRepository,
+        DaemonServerRepository $serverRepository
     ) {
         // Do not process a task that is not set to active, unless it's been manually triggered.
         if (!$this->task->schedule->is_active && !$this->manualRun) {
@@ -84,11 +89,8 @@ class RunTaskJob extends Job implements ShouldQueue
                     $backupService->setIgnoredFiles(explode(PHP_EOL, $this->task->payload))->handle($server, null, true);
                     break;
                 case 'rust_wipe':
-                    // I believe we can just use any repository since the http clients should all be the same...
-                    $uuid = $server->uuid;
-                    $powerRepository->setServer($server)->getHttpClient()->post("/api/servers/$uuid/rust_wipe/wipe", [
-                        'json' => ['force' => false],
-                    ]);
+                    $rustWipeService = new RustWipeService();
+                    $rustWipeService->wipe($server, false);
                     break;
                 default:
                     throw new InvalidArgumentException('Invalid task action provided: ' . $this->task->action);
